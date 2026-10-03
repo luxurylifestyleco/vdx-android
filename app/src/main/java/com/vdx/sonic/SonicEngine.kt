@@ -20,6 +20,7 @@ import com.vdx.sonic.voice.EntityRepairEngine
 import com.vdx.sonic.voice.GeminiTtsEngine
 import com.vdx.sonic.voice.GroqAsrEngine
 import com.vdx.sonic.voice.IntentParser
+import com.vdx.sonic.voice.LlmIntentFallback
 import com.vdx.sonic.voice.LocalCleanupEngine
 import com.vdx.sonic.voice.PromptTemplate
 import com.vdx.sonic.voice.SarvamAsrEngine
@@ -116,6 +117,8 @@ class SonicEngine(
             val sarvamModel = prefs.getString("vdx_sarvam_model", null) ?: "saarika:v2.5"
             sarvamAsr = SarvamAsrEngine(sarvamKey, sarvamModel)
         }
+        // Open-language input: with a BYOK Gemini key, regex-missed phrasings get an LLM classification.
+        if (!geminiKey.isNullOrBlank()) intentParser.llmFallback = LlmIntentFallback(geminiKey, geminiModel)
         if (!geminiKey.isNullOrBlank()) {
             // Gemini TTS is FALLBACK ONLY (per locked voice-stack decision):
             // system TextToSpeech is the primary spoken-response path. Cloud TTS
@@ -235,7 +238,7 @@ class SonicEngine(
                     contacts = getContacts()
                 )
 
-                val intent = intentParser.parse(repairResult.repairedText)
+                val intent = intentParser.parseSmart(repairResult.repairedText)
                 if (handleCancel(intent)) return@launch
                 if (gateUnresolvedIr(intent)) return@launch
 
@@ -372,7 +375,7 @@ class SonicEngine(
                     vocabulary = getVocabulary(),
                     contacts = getContacts()
                 )
-                val intent = intentParser.parse(repairResult.repairedText)
+                val intent = intentParser.parseSmart(repairResult.repairedText)
                 if (handleCancel(intent)) return@launch
                 if (gateUnresolvedIr(intent)) return@launch
 
@@ -485,7 +488,7 @@ class SonicEngine(
                     contacts = getContacts()
                 )
 
-                val intent = intentParser.parse(repairResult.repairedText)
+                val intent = intentParser.parseSmart(repairResult.repairedText)
                 if (handleCancel(intent)) return@launch
                 if (gateUnresolvedIr(intent)) return@launch
 
