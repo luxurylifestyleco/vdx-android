@@ -440,12 +440,16 @@ class BubbleForegroundService : Service() {
 
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-        // ISSUE 1(a): 64dp x 64dp (was 56dp x 80dp)
-        // ISSUE 1(d): 64dp > 48dp minimum tap target
-        val bubbleSize = dpToPx(80)
-        val haloSize = dpToPx(96)   // ISSUE 1(c): larger halo behind bubble
-        val x = dpToPx(16)
-        val y = dpToPx(120)
+        // CODY'S DIRECTIVE (2026-10-06): emulate WisprFlow's dimensions + transparency.
+        // Old: 80dp blocky pill + 96dp halo — read as a 'persistent square' on real phones.
+        // New: compact 44dp circle (still ≥48px tap-target) + whisper-thin 52dp halo
+        // + slight window translucency (0.92) — like Wispr Flow's unobtrusive pill.
+        val bubbleSize = dpToPx(44)
+        val haloSize = dpToPx(52)
+        // WisprFlow dock: lower-right edge (thumb zone); vertical center-ish of lower third
+        val dm = resources.displayMetrics
+        val x = dpToPx(14)
+        val y = Math.max(dpToPx(60), (dm.heightPixels * 0.62f).toInt())
         bubbleX = x
         bubbleY = y
 
@@ -453,7 +457,7 @@ class BubbleForegroundService : Service() {
         val halo = View(this).apply {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.argb(40, 108, 58, 237))
+                setColor(Color.argb(12, 108, 58, 237))
             }
         }
         haloView = halo
@@ -511,6 +515,7 @@ class BubbleForegroundService : Service() {
             gravity = Gravity.TOP or Gravity.START
             this.x = x
             this.y = y
+            alpha = 0.86f   // WisprFlow-style translucency (glassy, readable)
         }
         bubbleParams = params
 
@@ -616,13 +621,20 @@ class BubbleForegroundService : Service() {
 
     private fun applyPillBackground(view: View, state: BubbleState) {
         val (startColor, endColor) = stateColors(state)
-        val cornerRadius = dpToPx(28).toFloat()
+        // PHONE-TEST FIX (real-device round): the bubble must be a CIRCLE.
+        // cornerRadius was fixed at 28dp on an 80dp square box → visibly square
+        // (Aman's 'persistent square' + the 83s recording). Radius = half the
+        // view's width → perfect circle at any size. View width is used instead
+        // of the constant so future sizes stay circular.
+        val w = view.width
+        val radius = ((if (w > 0) w else dpToPx(80)) / 2f).toFloat()
 
         val drawable = GradientDrawable().apply {
             orientation = GradientDrawable.Orientation.LEFT_RIGHT
             colors = intArrayOf(startColor, endColor)
-            this.cornerRadius = cornerRadius
-            setStroke(dpToPx(2), Color.argb(80, 255, 255, 255))
+            this.cornerRadius = radius
+            // WisprFlow-style soft edge: no hard stroke; glassy edge via subtle lighter halo ring instead
+            setStroke(dpToPx(1), Color.argb(36, 255, 255, 255))
         }
         view.background = drawable
     }

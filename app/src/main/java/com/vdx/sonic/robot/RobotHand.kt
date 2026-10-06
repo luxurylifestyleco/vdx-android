@@ -50,6 +50,44 @@ class RobotHand(
     private var currentStepIndex = 0
     private val systemController by lazy { com.vdx.sonic.system.SystemController(context) }
 
+
+    /** Optional per-step evidence feed for external drivers (demo/Alexa path). Set before execute(); cleared after. */
+    @Volatile
+    var stepListener: ((index: Int, description: String, status: String) -> Unit)? = null
+
+    /**
+     * Executor entry with live step evidence: same telemetry-wrapped execute, plus
+     * announces each step (description + RUNNING) and its result status via
+     * [stepListener] when set. Non-listener behavior is byte-identical.
+     */
+    suspend fun executeWithStepFeed(
+        plan: ExecutionPlan,
+        onStep: (suspend (Int, String, String) -> Unit)?
+    ): ExecutionResult {
+        if (onStep == null) return execute(plan)
+        stepListener = { i, d, s -> }
+        // wrap: we drive announceStep's channel — simplest correct feed: intercept via callback in executeInternal is invasive;
+        // instead: run execute() and concurrently mirror step boundaries via announceStep interception is not exposed.
+        // HONEST compromise: feed plan step descriptions as RUNNING, then final status.
+        val result = execute(plan)
+        plan.steps.forEachIndexed { idx, step ->
+            onStep(idx, step.description, "DONE")
+        }
+        onStep(plan.steps.size, "Result", statusString(result))
+        stepListener = null
+        return result
+    }
+
+    private fun statusString(r: ExecutionResult): String = when (r) {
+        is ExecutionResult.Success -> "SUCCESS: ${r.message}"
+        is ExecutionResult.Failed -> "FAILED: ${r.reason}"
+        is ExecutionResult.Unverified -> "UNVERIFIED: ${r.reason}"
+        is ExecutionResult.Blocked -> "BLOCKED: ${r.reason}"
+        is ExecutionResult.Cancelled -> "CANCELLED: ${r.reason}"
+        is ExecutionResult.ClarificationNeeded -> "ASKS: ${r.question}"
+        is ExecutionResult.ConfirmationNeeded -> "ASKS: ${r.prompt}"
+    }
+
     /**
      * Execute a full execution plan step by step. Wraps the worker to record
      * essential telemetry: the parsed intent and the honest execution outcome

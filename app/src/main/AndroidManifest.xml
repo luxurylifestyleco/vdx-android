@@ -48,6 +48,13 @@
         android:theme="@style/Theme.VDX"
         tools:targetApi="34">
 
+        <!-- D-fix (device crash): sentry-android auto-installs SentryInitProvider which
+             throws 'DSN is required' at app start when no DSN is configured. The app
+             ships its own privacy-clean Telemetry; disable Sentry auto-init until the
+             team deliberately wires a DSN (then also set a real DSN). -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+        <meta-data android:name="io.sentry.enabled" android:value="false" />
+
         <activity
             android:name="com.vdx.MainActivity"
             android:exported="true"
