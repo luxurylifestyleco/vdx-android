@@ -57,6 +57,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnTestEmail: Button
     private lateinit var btnTestAll: Button
     private lateinit var btnClearLog: Button
+    // Demo driver (outside-request path)
+    private lateinit var demoInput: EditText
+    private lateinit var btnDemoSend: Button
+    private lateinit var btnDemoClear: Button
+    private lateinit var demoEvidence: TextView
 
     // Structured logger for harness sessions
     private var harnessLogger: SessionLogger? = null
@@ -94,6 +99,12 @@ class MainActivity : AppCompatActivity() {
         btnTestEmail = findViewById(R.id.btn_test_email)
         btnTestAll = findViewById(R.id.btn_test_all)
         btnClearLog = findViewById(R.id.btn_clear_log)
+        demoInput = findViewById(R.id.demo_input)
+        btnDemoSend = findViewById(R.id.btn_demo_send)
+        btnDemoClear = findViewById(R.id.btn_demo_clear)
+        demoEvidence = findViewById(R.id.demo_evidence)
+        btnDemoSend.setOnClickListener { sendDemoRequest() }
+        btnDemoClear.setOnClickListener { demoEvidence.text = "" }
 
         // Text input — type an intent and press send
         textInput.setOnEditorActionListener { _, actionId, _ ->
@@ -351,6 +362,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun processTextIntent(text: String) {
         runSpoken(text)
+    }
+
+    // ════ DEMO DRIVER (the Alexa-shaped outside request) ═══════════════
+    // Sends the phrase through DemoDriver (same production gates), shows
+    // the returned evidence JSON live in the demo panel.
+    private fun sendDemoRequest() {
+        val phrase = demoInput.text.toString().trim()
+        if (phrase.isEmpty()) {
+            Toast.makeText(this, "Type a request first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val id = com.vdx.demo.DemoDriver.sendCommand(this, phrase, "Alexa (demo)")
+        demoEvidence.text = "Request $id sent — running through the safety gates…"
+        demoInput.setText("")
+        com.vdx.demo.DemoDriver.addListener { rec ->
+            if (rec.id == id) {
+                runOnUiThread {
+                    demoEvidence.text = com.vdx.demo.DemoDriver.evidenceJson(rec)
+                }
+            }
+        }
     }
 
     private fun runSpoken(text: String) {

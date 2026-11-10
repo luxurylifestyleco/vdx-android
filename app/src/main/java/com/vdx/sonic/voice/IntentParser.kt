@@ -499,4 +499,29 @@ class IntentParser {
         )
         return keywords.any { text.contains(it) }
     }
+
+    // ── Open-language input (the input-mechanism upgrade) ──
+    // Optional LLM fallback: wired by SonicEngine when a BYOK Gemini key exists.
+    // parse() stays pure/sync for the corpus tests; parseSmart is the engine path.
+    @Volatile
+    var llmFallback: LlmIntentFallback? = null
+
+    /**
+     * Engine path: regex first (fast, free, private). On UNKNOWN / unknown-ish
+     * low-confidence results and when the fallback is configured, classify via
+     * the LLM; on any null → return the original regex result (the designed
+     * clarification loop takes over unchanged). Never throws.
+     */
+    suspend fun parseSmart(cleanedText: String): SonicIntent {
+        val regexResult = parse(cleanedText)
+        val needsHelp = regexResult.type == IntentType.UNKNOWN ||
+            (regexResult.confidence < MED)
+        if (!needsHelp) return regexResult
+        val llm = llmFallback ?: return regexResult
+        val llmResult = try { llm.classify(cleanedText) } catch (e: Exception) { null }
+        if (llmResult == null) return regexResult
+        // Guard: the LLM result must not be WORSE than what regex found.
+        return if (llmResult.confidence > regexResult.confidence) llmResult else regexResult
+    }
+
 }

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VDX Demo — One Complete Journey (Alexa-shaped)</title>
+<style>
+:root{
+  --bg:#F7F5FC; --card:#FFFFFF; --ink:#241F3A; --sub:#6B6485;
+  --lav:#8B7CF6; --lavd:#6D5BE0; --soft:#EDE9FE; --hair:#E6E1F4;
+  --ok:#0E9F6E; --okbg:#D7F5E9; --warn:#E0245E; --warnbg:#FDE2EA;
+  --amber:#D9A509; --amberbg:#FCF2D8; --lock:#C9C4DE;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:20px}
+.wrap{max-width:880px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFFFFF, #E8E2FD);border-radius:24px;padding:28px;border:1px solid var(--hair);margin-bottom:16px}
+.kicker{display:inline-block;background:var(--soft);color:var(--lavd);font-weight:800;font-size:11px;letter-spacing:2px;padding:7px 14px;border-radius:999px}
+h1{font-size:34px;margin:10px 0 4px}
+.hero p{color:var(--sub);font-size:15px;line-height:1.5}
+.sec{background:var(--card);border:1.5px solid var(--hair);border-radius:18px;padding:16px;margin-bottom:14px}
+.sec h2{font-size:16px;font-weight:800;margin-bottom:6px}
+.sec .note{color:var(--sub);font-size:12.5px;line-height:1.5;margin-bottom:12px}
+input[type=text]{width:100%;padding:13px 15px;border:1.5px solid var(--hair);border-radius:12px;font-size:14px;background:#FAF9FE;outline:none;transition:.2s}
+input[type=text]:focus{border-color:var(--lav);background:#fff}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{flex:1;min-width:120px;padding:13px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;transition:.15s;background:var(--lav);color:#fff}
+button:hover{background:var(--lavd);transform:translateY(-1px)}
+button.ghost{background:var(--soft);color:var(--lavd)}
+button:active{transform:scale(.98)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{background:var(--soft);color:var(--lavd);font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer}
+.pill:hover{background:var(--lav);color:#fff}
+.ev{background:#1a1a2e;border-radius:14px;padding:14px;margin-top:12px;min-height:60px}
+.ev-line{font-family:Consolas,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap}
+.k{color:#B9AEFF}.v-ok{color:#4ADE80}.v-no{color:#FB7185}.v-mid{color:#FBBF24}.v-dim{color:#8a8a9e}
+.fl{display:inline-block;font-size:10px;font-weight:900;letter-spacing:1px;padding:3px 10px;border-radius:999px;margin-right:8px}
+.fl.SUCCESS{background:var(--okbg);color:var(--ok)} .fl.UNVERIFIED{background:var(--amberbg);color:var(--amber)}
+.fl.BLOCKED{background:var(--warnbg);color:var(--warn)} .fl.CANCELLED{background:#F0EDF7;color:var(--sub)}
+.fl.CLARIFY{background:var(--soft);color:var(--lavd)} .fl.RUNNING{background:var(--soft);color:var(--lavd)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th{text-align:left;color:var(--lavd);font-size:10.5px;letter-spacing:1px;padding:6px 8px;background:var(--soft)}
+td{padding:7px 8px;border-bottom:1px solid var(--hair);color:var(--sub);line-height:1.4}
+td:first-child{font-weight:700;color:var(--ink)}
+footer{color:var(--sub);font-size:11.5px;text-align:center;padding:14px;line-height:1.5}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="kicker">VDX · DEMO · ONE COMPLETE JOURNEY</span>
+    <h1>Outside request → verified outcome</h1>
+    <p>This browser page plays the role of <b>Alexa (or any outside driver)</b>. A phrase enters the one door,
+    the same safety gates run, and structured evidence returns — every honest flavor: success, unverified, blocked, cancelled, or clarify.</p>
+  </div>
+
+  <div class="sec">
+    <h2>1 · Send a request as the outside driver</h2>
+    <div class="note">Type any command exactly as a user would say it. The demo simulates the device pipeline:
+    parse → safety gate → confirmation → execution → evidence.</div>
+    <input type="text" id="phrase" placeholder='e.g. WhatsApp Papa saying I will be late' autocomplete="off">
+    <div class="pills">
+      <span class="pill" onclick="fill('WhatsApp Papa saying I will be late')">WhatsApp Papa…</span>
+      <span class="pill" onclick="fill('call Mom')">call Mom</span>
+      <span class="pill" onclick="fill('open Uber to the airport')"> Uber…</span>
+      <span class="pill" onclick="fill('send money to Papa via GPay')">💸 money attempt</span>
+      <span class="pill" onclick="fill('flurble the warrant')">garbage</span>
+      <span class="pill" onclick="fill('stop')">stop / cancel</span>
+    </div>
+    <div class="row">
+      <button onclick="send()">Send request</button>
+      <button class="ghost" onclick="resetAll()">Clear evidence</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>2 · Evidence return</h2>
+    <div class="note">The structured result the relay would hand back to Alexa.</div>
+    <div class="ev" id="ev"><div class="ev-line v-dim">(no request yet — evidence appears here)</div></div>
+  </div>
+
+  <div class="sec">
+    <h2>3 · The truth-flavor map (what each outcome means)</h2>
+    <table>
+      <tr><th>FLAVOR</th><th>MEANING</th></tr>
+      <tr><td><span class="fl SUCCESS">SUCCESS</span></td><td>Outcome verified — the intended UI state was observed.</td></tr>
+      <tr><td><span class="fl UNVERIFIED">UNVERIFIED</span></td><td>Attempted, but the final state could not be confirmed. Never reported as "done".</td></tr>
+      <tr><td><span class="fl BLOCKED">BLOCKED</span></td><td>A step failed; all downstream steps refused to run (no silent cascade).</td></tr>
+      <tr><td><span class="fl CANCELLED">CANCELLED</span></td><td>The user said no / aborted before anything happened.</td></tr>
+      <tr><td><span class="fl CLARIFY">CLARIFY</span></td><td>The request is ambiguous — the app asks instead of guessing.</td></tr>
+    </table>
+  </div>
+
+  <div class="sec">
+    <h2>4 · Journey checklist (the boss's six steps → what this demo proves)</h2>
+    <table>
+      <tr><th>STEP</th><th>STATUS IN THIS DEMO</th></tr>
+      <tr><td>1 · One adapter entry</td><td>One door — every phrase enters through the same submit point (in the real build: ExternalAutomationReceiver / the Lambda relay).</td></tr>
+      <tr><td>2 · One registered capability</td><td>The parser selects one intent from the registered vocabulary (49 rules / 27 types).</td></tr>
+      <tr><td>3 · Approval where required</td><td>Destructive actions (call / WhatsApp / ride) always stop for explicit confirmation.</td></tr>
+      <tr><td>4 · Executes on the phone</td><td>The production pipeline runs the plan step by step (in this page: simulated; on-device: RobotHand).</td></tr>
+      <tr><td>5 · Evidence returned</td><td>Structured JSON per journey: outcome + steps + duration.</td></tr>
+      <tr><td>6 · Tree shows every truth-flavor</td><td>The table above — offline/cancelled/unverified never silently "pass".</td></tr>
+    </table>
+  </div>
+
+  <footer>VDX demo journey page · works fully offline · pairs with the on-device build (C:\Users\Admin\VDX-demo-v2.apk)</footer>
+</div>
+
+<script>
+function fill(t){ document.getElementById('phrase').value = t; }
+function resetAll(){ document.getElementById('ev').innerHTML = '<div class="ev-line v-dim">(cleared)</div>'; }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+const FORBIDDEN = ['gpay','google pay','phonepe','paytm','paypal','send money','pay ','payment','bank'];
+const CONTACTS = ['Papa','Mom','Mummy','Ravi','Sister','Brother'];
+
+function parse(phrase){
+  const t = phrase.toLowerCase().trim();
+  if(!t) return null;
+  if(t==='stop'||t==='cancel'||t==='never mind') return {type:'CANCEL', conf:0.98};
+  if(FORBIDDEN.some(w=>t.includes(w))) return {type:'MONEY', conf:0.9};
+  let m;
+  if(m = t.match(/whats?app\s+(.+)$/)) {
+    const rest = m[1];
+    if(/\bcall\b/.test(rest)) return {type:'WHATSAPP_CALL', conf:0.95, contact:title(rest.replace(/\s*(?:please\s+)?call.*$/,'')||'')};
+    // split "papa saying I will be late" → contact=papa, msg=I will be late
+    const mm = rest.match(/^(.+?)\s*(?:saying|saying that|message|and say)\s+(?:that\s+)?(.*)$/);
+    const contact = mm ? title(mm[1].replace(/^to\s+/,'')) : title(rest.replace(/^to\s+/,''));
+    const msg = mm ? mm[2].trim() : '';
+    return {type:'WHATSAPP', conf: msg?0.96:0.85, contact, msg};
+  }
+  if(m = t.match(/^(?:please\s+)?call\s+(.+)$/)) return {type:'CALL', conf:0.95, contact:title(m[1])};
+  if(m = t.match(/(?:open|book)\s+(?:an?\s+)?uber\s+(?:to|for)\s+(.+)$/)) return {type:'RIDE', conf:0.93, dest:m[1]};
+  if(m = t.match(/(?:play|search)\s+(.+)\s+on\s+youtube/)) return {type:'YT', conf:0.92, q:m[1]};
+  if(/^(?:hi|hello|hey|good (morning|evening)|thanks|thank you|ok|okay)\b/.test(t)) return {type:'CHITCHAT', conf:0.9};
+  return {type:'UNKNOWN', conf:0.35};
+}
+function title(s){ return s.replace(/\b\w/g,c=>c.toUpperCase()).trim().replace(/\bOn Whatsapp$|\bVia Whatsapp$/i,''); }
+
+async function send(){
+  const raw = document.getElementById('phrase').value.trim();
+  const ev = document.getElementById('ev');
+  if(!raw){
+    ev.innerHTML = '<div class="ev-line"><span class="fl CLARIFY">CLARIFY</span> <span class="k">headline:</span> <span class="v-mid">"Type a request first."</span></div>';
+    return;
+  }
+  const t0 = Date.now();
+  const id = Math.random().toString(16).slice(2,10);
+  ev.innerHTML = '<div class="ev-line"><span class="fl RUNNING">RUNNING</span> <span class="k">taskId:</span> '+id+
+    '\n<span class="k">driver:</span> "Alexa (browser demo)"\n<span class="k">phrase:</span> "'+esc(raw)+'"'+
+    '\n<span class="k">pipeline:</span> parse → safety gates…</div>';
+  await sleep(500);
+
+  const p = parse(raw);
+
+  // gate 1 — money is hard-blocked (no confirmation can pass it)
+  if(p.type==='MONEY'){
+    await sleep(300);
+    ev.innerHTML = evidence(id,raw,'BLOCKED','Blocked: money and payment actions are not voice-executable. This is a hard boundary — no confirmation can lift it.',
+      [['1','VoiceSafeActions.enforce','BLOCKED (hard)']]);
+    return;
+  }
+  // gate 2 — garbage / unknown → the app asks, never guesses
+  if(p.type==='UNKNOWN' || p.type==='CHITCHAT'){
+    await sleep(300);
+    ev.innerHTML = evidence(id,raw,'CLARIFY','"I didn\'t understand. Try: WhatsApp, Uber, YouTube, call, SMS, settings, or search."',
+      [['1','IntentParser.parse','UNKNOWN'],['2','ClarificationEngine','asked instead of guessing']]);
+    return;
+  }
+  // gate 3 — confirmation for consequential actions
+  const needsConfirm = ['CALL','WHATSAPP','WHATSAPP_CALL','RIDE'].includes(p.type);
+  if(needsConfirm){
+    ev.innerHTML = '<div class="ev-line"><span class="fl RUNNING">WAITING</span> <span class="k">taskId:</span> '+id+
+      '\n<span class="k">confirmation:</span> "May I proceed with '+(p.contact||p.dest||'Papa')+'?" — waiting for the user…'+
+      '\n<span class="k">on-device:</span> the phone shows the confirm prompt; nothing runs until yes.</div>';
+    await sleep(900);
+    const yes = confirm('CONFIRMATION PROMPT (demo):\n\nMay I proceed with "'+raw+'" ?\n\nOK = Yes   Cancel = No');
+    if(!yes){
+      ev.innerHTML = evidence(id,raw,'CANCELLED','"Cancelled." Nothing ran — the confirmation gate held. (Cancellation after prompt also prevents the call — verified in the record.)',
+        [['1','IntentParser.parse','intent '+p.type+' conf '+p.conf],
+         ['2','ConfirmationGate','WAITING'],['3','User response','NO'],['4','Execution','never started']]);
+      return;
+    }
+  }
+
+  // execution phase — step feed (simulated device work)
+  const steps = buildSteps(p);
+  let html = '<div class="ev-line"><span class="fl RUNNING">RUNNING</span> <span class="k">taskId:</span> '+id+'\n';
+  for(const [i,(d,s)] of steps.entries()){
+    await sleep(420);
+    html += '<span class="k">step '+(i+1)+':</span> '+esc(d)+' … <span class="v-dim">'+s+'</span>\n';
+    ev.innerHTML = html+'</div>';
+  }
+  await sleep(350);
+
+  // outcome: unverified by design when the "device" can't confirm the final state
+  const canVerify = !['RIDE'].includes(p.type);
+  const flavor = canVerify ? 'SUCCESS' : 'UNVERIFIED';
+  const headline = canVerify ? successHeadline(p) : 'Tried, but can\'t confirm it worked (the ride app\'s final state was not verifiable). Honest answer, not "done".';
+  html += '— — —\n<span class="k">evidence JSON (what Alexa would receive):</span>\n{\n  "taskId": "'+id+'",\n  "outcome": "'+flavor+'",\n  "headline": "'+esc(headline).replace(/"/g,'\\"')+'",\n  "steps": '+JSON.stringify(steps.length)+',\n  "durationMs": '+(Date.now()-t0)+'\n}\n</div>';
+  ev.innerHTML = html.replace('<span class="fl RUNNING">RUNNING</span>','<span class="fl '+flavor+'">'+flavor+'</span>');
+}
+
+function buildSteps(p){
+  switch(p.type){
+    case 'WHATSAPP': return [
+      ['Open WhatsApp','Success (verified foreground)'],['Search contact: '+(p.contact||''),'Success'],
+      ['Open chat','Success'],['Type message'+(p.msg?': '+p.msg:''),'Success (verified in field)'],
+      ['Send','Held — user confirms on the phone']];
+    case 'WHATSAPP_CALL': return [
+      ['Open WhatsApp','Success'],['Search contact','Success'],['Open chat','Success'],
+      ['Tap voice call button','Success']];
+    case 'CALL': return [
+      ['Open dialer for '+(p.contact||'contact'),'Success (verified foreground)'],
+      ['Confirm call','User confirms on the dialer']];
+    case 'RIDE': return [
+      ['Open Uber','Success'],['Tap "Where to?"','Success'],
+      ['Type destination'+(p.dest?': '+p.dest:''),'Success (verified in field)'],
+      ['Confirm booking','Held — user confirms on the phone']];
+    case 'YT': return [
+      ['Open YouTube','Success'],['Search '+(p.q||''),'Success'],
+      ['Open first result','Success']];
+  }
+  return [];
+}
+function successHeadline(p){
+  switch(p.type){
+    case 'WHATSAPP': return 'Message typed and verified in the field — send waits for your confirm on the phone.';
+    case 'WHATSAPP_CALL': return 'WhatsApp call screen reached — verified.';
+    case 'CALL': return 'Dialer is open with the contact — verified. Press call to place it.';
+    case 'YT': return 'YouTube playing '+(p.q||'the request')+' — verified.';
+  }
+}
+function evidence(id,raw,flavor,headline,steps){
+  let s = '<div class="ev-line"><span class="fl '+flavor+'">'+flavor+'</span> <span class="k">taskId:</span> '+id+
+    '\n<span class="k">phrase:</span> "'+esc(raw)+'"'+
+    '\n<span class="k">headline:</span> <span class="'+(flavor==='BLOCKED'?'v-no':flavor==='CANCELLED'?'v-dim':'v-mid')+'">'+esc(headline)+'</span>\n';
+  steps.forEach((st,i)=>{ s+='<span class="k">step '+st[0]+':</span> '+esc(st[1])+' … <span class="v-dim">'+st[2]+'</span>\n'; });
+  return s+'</div>';
+}
+</script>
+</body>
+</html>
